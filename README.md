@@ -51,3 +51,52 @@ Expected: Duhet të shfaqen të gjitha fajllat që përmbajnë fjalën test (p.s
 
 ℹ️ 8. Komanda /info<br>
 - /info test1.txt
+
+# 🔐 Testet për Klientët Admin<br>
+📢 1. Mesazhe BROADCAST<br>
+- BROADCAST: Hello all clients!
+
+📬 2. Komanda /messages<br>
+- /messages
+
+🚫 3. Testimi i kufizimeve të përdoruesve jo-admin<br>
+- /delete test1.txt
+- /upload somefile.txt
+- /messages
+- BROADCAST
+- ...
+
+Expected: ERROR: Admin privileges required
+
+# 🛠️ Server Management Tests<br>
+📊 1. Komanda STATS<br>
+- STATS
+
+🔌 2. Testimi i limitit të lidhjeve<br>
+- Terminal 5 – Klienti 4
+- php udp_client.php
+
+
+Expected: ERROR: Server is at maximum capacity. Please try again later.
+
+🕒 3. Testimi i Timeout-it<br>
+
+- Mos dërgoni mesazhe për 100+ sekonda dhe pastaj shkruani: Hello
+
+
+Expected: Klienti duhet të rilidhet automatikisht.
+
+# ❗ Error Handling Tests
+❌ 1. Komanda invalide<br>
+- /invalid
+
+Expected: Unknown command. Available: /list, /read, /upload, /download, /delete,<br> /search, /info, /messages
+
+📄 2. Fajllat që nuk ekzistojnë<br>
+- /read nonexistent.txt
+
+
+Expected: ERROR: File not found
+
+# Antaret e Grupit
+- Erjon Mustafa, Albin Maqastena, Jon Llabjani dhe Diell Fazliu
