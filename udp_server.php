@@ -115,3 +115,107 @@ private function getMessageLog($is_admin)
             date('Y-m-d H:i:s', $stat['ctime']) . "\nModified: " .
             date('Y-m-d H:i:s', $stat['mtime']);
     }
+    private function processMessage($data, $client_key, $ip, $port)
+    {
+        $data = trim($data);
+        echo "Received from $client_key: $data\n";
+
+        $this->logMessage($client_key, $data);
+
+        if ($data === 'STATS') {
+            $response = $this->getStats();
+        } else {
+            $response = $this->handleClientCommand($data, $client_key);
+        }
+
+        if (!empty($response)) {
+            $this->sendToClient($response, $ip, $port, $client_key);
+        }
+    }
+
+    private function logMessage($client_key, $message)
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $log_entry = "[$timestamp] $client_key: $message\n";
+        file_put_contents($this->message_log, $log_entry, FILE_APPEND | LOCK_EX);
+    }
+
+    private function handleClientCommand($data, $client_key)
+    {
+        $is_admin = $this->clients[$client_key]['is_admin'] ?? false;
+
+        if (strpos($data, '/') !== 0) {
+            return $this->handleTextMessage($data, $client_key);
+        }
+
+        $parts = explode(' ', $data, 2);
+        $command = $parts[0];
+        $parameter = $parts[1] ?? '';
+
+        switch ($command) {
+            case '/delete':
+                if (!$is_admin) return "ERROR: Admin privileges required";
+                return $this->deleteFile($parameter ?: '', $client_key);
+
+            case '/upload':
+                if (!$is_admin) return "ERROR: Admin privileges required";
+                return "Use /upload <filename> or send FILE_DATA to upload";
+
+            case '/messages':
+                if (!$is_admin) return "ERROR: Admin privileges required";
+                return $this->getMessageLog($is_admin);
+
+            case '/info':
+                if (!$is_admin) return "ERROR: Admin privileges required";
+                return $parameter ? $this->fileInfo($parameter) : "ERROR: Please specify filename";
+
+            case '/search':
+                if (!$is_admin) return "ERROR: Admin privileges required";
+                return $parameter ? $this->searchFiles($parameter) : "ERROR: Please specify search keyword";
+
+            case '/list':
+                return $this->listFiles($parameter ?: '.', $client_key);
+
+            case '/read':
+                return $parameter ? $this->readFile($parameter, $client_key) : "ERROR: Please specify filename";
+
+            case '/download':
+                return $parameter ? $this->downloadFile($parameter, $client_key) : "ERROR: Please specify filename";
+
+            default:
+                if (strpos($data, 'FILE_DATA:') === 0) {
+                    if (!$is_admin) return "ERROR: Admin privileges required for upload";
+                    return $this->handleFileUpload(substr($data, 10));
+                }
+                return "Unknown command. Available: /list, /read, /upload, /download, /delete, /search, /info, /messages";
+        }
+    }
+
+    private function handleTextMessage($message, $client_key)
+    {
+        $response = "Message received: \"$message\"";
+
+        if ($this->clients[$client_key]['is_admin'] ?? false) {
+            $response .= " (Admin priority processing)";
+
+            if (strpos($message, 'BROADCAST:') === 0) {
+                $this->broadcastMessage($client_key, substr($message, 10));
+                $response = "Broadcast message sent to all clients";
+            }
+        }
+
+        return $response;
+    }
+
+    private function broadcastMessage($from_client, $message)
+    {
+        $broadcast_count = 0;
+        foreach ($this->clients as $client_key => $client) {
+            if ($client_key !== $from_client) {
+                $broadcast_msg = "BROADCAST from $from_client: $message";
+                $this->sendToClient($broadcast_msg, $client['ip'], $client['port'], $client_key);
+                $broadcast_count++;
+            }
+        }
+        echo "Broadcast sent to $broadcast_count clients\n";
+    }
