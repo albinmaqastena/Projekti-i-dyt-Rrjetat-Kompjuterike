@@ -1,1 +1,1 @@
-# Projekti-i-dyt-Rrjetat-Kompjuterike
+# Projekti-i-dyte-Rrjetat-Kompjuterike
