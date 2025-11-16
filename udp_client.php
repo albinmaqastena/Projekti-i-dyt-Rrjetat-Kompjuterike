@@ -1,6 +1,5 @@
 <?php
-class UDPClient
-{
+class UDPClient{
     private $socket;
     private $server_host;
     private $server_port;
