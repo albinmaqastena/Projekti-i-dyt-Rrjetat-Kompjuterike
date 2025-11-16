@@ -1,6 +1,6 @@
 # UDP Server & Client – Test Guide
 
-Ky dokument përshkruan instalimin, nisjen dhe testimin e komandave të serverit dhe klientëve të UDP-së.
+Ky dokument përshkruan startimin dhe testimin e komandave të serverit dhe klientëve të UDP-së.
 
 # ⚙️ Nisja e Serverit
 
